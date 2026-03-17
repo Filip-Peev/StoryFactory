@@ -366,7 +366,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                 }
             ?>
                 <div class="story-card">
-                    <a href="<?php echo $dir; ?>/index.php" target="_blank" class="card-link" style="padding:0;">
+                    <a href="<?php echo $dir; ?>/" target="_blank" class="card-link" style="padding:0;">
                         <div class="card-preview-box">
                             <?php if ($thumbnail): ?>
                                 <img src="<?php echo $thumbnail; ?>" alt="Story Preview">
