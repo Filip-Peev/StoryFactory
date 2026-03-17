@@ -1,345 +1,296 @@
+<?php
+ob_start();
+session_start();
+
+// Simple check: You are either admin or you are a visitor.
+$isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
+
+$root_stories = 'stories/';
+
+// Helper function to delete a folder
+function deleteDirectory($dir)
+{
+    if (!file_exists($dir)) return true;
+    if (!is_dir($dir)) return unlink($dir);
+    foreach (scandir($dir) as $item) {
+        if ($item == '.' || $item == '..') continue;
+        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item)) return false;
+    }
+    return rmdir($dir);
+}
+
+// --- ADMIN ONLY ACTIONS ---
+if (!$isAdmin && ($_SERVER['REQUEST_METHOD'] == 'POST' || isset($_GET['msg']))) {
+    // If a non-admin tries to post data, stop them.
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') die("Unauthorized");
+}
+
+// Handle Delete
+if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empty($_POST['folder_name'])) {
+    $target = $root_stories . basename($_POST['folder_name']);
+    if (file_exists($target) && is_dir($target)) {
+        deleteDirectory($target);
+    }
+    header("Location: index.php?msg=deleted");
+    exit;
+}
+
+// Handle Rename
+if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
+    $old_folder = $root_stories . basename($_POST['old_name']);
+    $new_safe_name = strtolower(preg_replace('/[^A-Za-z0-9\-]/', '-', $_POST['new_name']));
+    $new_folder = $root_stories . $new_safe_name;
+    if (file_exists($old_folder) && !file_exists($new_folder)) {
+        rename($old_folder, $new_folder);
+    }
+    header("Location: index.php?msg=renamed");
+    exit;
+}
+
+// Handle Create
+if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name']) && !isset($_POST['action'])) {
+    $folder_name = strtolower(preg_replace('/[^A-Za-z0-9\-]/', '-', $_POST['story_name']));
+    $target_dir = $root_stories . $folder_name;
+    if (!file_exists($target_dir)) {
+        mkdir($target_dir, 0777, true);
+        mkdir($target_dir . '/uploads', 0777, true);
+        $files_to_copy = ['index.php', 'admin.php', 'upload.php'];
+        foreach ($files_to_copy as $file) {
+            $src = 'template/' . $file;
+            $dest = $target_dir . '/' . $file;
+            if (file_exists($src)) copy($src, $dest);
+        }
+    }
+    header("Location: index.php?msg=created");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>My Story</title>
+    <title>Story Factory</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
-            margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: #111;
             color: white;
-            scroll-behavior: smooth;
+            padding: 20px;
+            margin: 0;
         }
 
-        .uploadbox {
-            padding: 40px 20px;
-            background: #000;
-            text-align: center;
-            border-bottom: 1px solid #222;
-            scroll-snap-align: start;
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .header-flex {
             display: flex;
-            flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            min-height: 400px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
         }
 
-        input[type="text"] {
-            width: 80%;
-            max-width: 400px;
-            padding: 10px;
-            margin: 5px 0;
+        .create-box {
+            background: #1a1a1a;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            margin-bottom: 30px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
             background: #222;
             border: 1px solid #444;
             color: white;
-            border-radius: 5px;
+            border-radius: 6px;
+            margin: 10px 0;
+            box-sizing: border-box;
         }
 
-        .char-count {
-            font-size: 11px;
-            color: #888;
-            margin-bottom: 10px;
-        }
-
-        #preview-container {
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        #preview-img {
-            max-width: 150px;
-            max-height: 150px;
-            border-radius: 8px;
-            border: 2px solid #444;
-        }
-
-        .error-msg {
-            background: #ff4444;
-            color: white;
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .story {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .story img {
-            max-width: 90%;
-            max-height: 70%;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-        }
-
-        .story img:hover {
-            transform: scale(1.03);
-        }
-
-        .text {
-            margin-top: 25px;
-            text-align: center;
-            padding: 0 20px;
-        }
-
-        .text p {
-            margin: 8px 0;
-            font-size: 20px;
-            font-weight: 300;
-            line-height: 1.4;
-            max-width: 600px;
-        }
-
-        .navbuttons {
-            position: fixed;
-            right: 25px;
-            top: 50%;
-            transform: translateY(-50%);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            z-index: 1000;
-        }
-
-        .navbuttons button {
-            width: 50px;
-            height: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            background: rgba(45, 45, 45, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.3s ease;
-        }
-
-        .navbuttons button svg {
-            width: 22px;
-            height: 22px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        @media (max-width: 768px) {
-            html {
-                scroll-snap-type: y mandatory;
-            }
-
-            .story {
-                scroll-snap-align: start;
-                scroll-snap-stop: always;
-            }
-
-            .navbuttons {
-                right: 10px;
-            }
-
-            .navbuttons button {
-                width: 45px;
-                height: 45px;
-            }
-
-            .story img:hover {
-                transform: none;
-            }
-        }
-
-        #lightbox {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .primary-btn {
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-
-        #lightbox img {
-            max-width: 95%;
-            max-height: 95%;
-            border-radius: 10px;
-        }
-
-        #close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 40px;
+            padding: 12px;
+            background: #00aaff;
             color: white;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
+            font-weight: bold;
+        }
+
+        .story-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .story-card {
+            background: #1a1a1a;
+            border-radius: 10px;
+            border: 1px solid #333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-link {
+            display: block;
+            padding: 30px 20px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            flex-grow: 1;
+            transition: 0.2s;
+        }
+
+        .card-link:hover {
+            background: #222;
+        }
+
+        .folder-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .card-actions {
+            display: flex;
+            border-top: 1px solid #333;
+            background: #151515;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px 5px;
+            background: none;
+            border: none;
+            color: #777;
+            cursor: pointer;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.2s;
+            text-decoration: none;
+            text-align: center;
+            border-right: 1px solid #333;
+        }
+
+        .action-btn:last-child {
+            border-right: none;
+        }
+
+        .action-btn:hover {
+            background: #222;
+            color: #fff;
+        }
+
+        .btn-delete:hover {
+            color: #ff4444;
+        }
+
+        .status-msg {
+            background: #28a745;
+            color: white;
             padding: 10px;
-            user-select: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
         }
     </style>
 </head>
 
 <body>
+    <div class="container">
+        <div class="header-flex">
+            <h1 style="margin:0;">
+                <a href="<?php echo dirname($_SERVER['PHP_SELF']); ?>/" style="text-decoration:none; color:inherit;">
+                    Story Factory
+                </a>
+            </h1>
 
-    <div class="navbuttons">
-        <button onclick="goTop()" title="First Story"><svg viewBox="0 0 24 24">
-                <path d="M12 19V5M5 12l7-7 7 7" />
-            </svg></button>
-        <button onclick="prevStory()" title="Previous"><svg viewBox="0 0 24 24">
-                <path d="M18 15l-6-6-6 6" />
-            </svg></button>
-        <button onclick="nextStory()" title="Next"><svg viewBox="0 0 24 24">
-                <path d="M6 9l6 6 6-6" />
-            </svg></button>
-        <button onclick="goBottom()" title="Last Story"><svg viewBox="0 0 24 24">
-                <path d="M12 5v14M5 12l7 7 7-7" />
-            </svg></button>
-    </div>
+            <?php if ($isAdmin): ?>
+                <a href="hub.php?logout=1" style="color:#666; text-decoration:none; font-size:12px; border: 1px solid #333; padding: 5px 10px; border-radius: 4px;">
+                    Exit Admin Mode
+                </a>
+            <?php endif; ?>
+        </div>
 
-    <div class="uploadbox">
-        <h2>Upload Image Story</h2>
-
-        <?php if (isset($_GET['error'])): ?>
-            <div class="error-msg">Invalid upload. Please check file type and text length.</div>
+        <?php if ($isAdmin && isset($_GET['msg'])): ?>
+            <div class="status-msg">Action successful: <?php echo htmlspecialchars($_GET['msg']); ?></div>
         <?php endif; ?>
 
-        <form action="upload.php" method="post" enctype="multipart/form-data" id="uploadForm">
-            <div id="preview-container">
-                <img id="preview-img" src="#" alt="Preview">
+        <?php if ($isAdmin): ?>
+            <div class="create-box">
+                <form method="post">
+                    <input type="text" name="story_name" placeholder="Enter New Story Title..." required>
+                    <button type="submit" class="primary-btn">Create a Story</button>
+                </form>
             </div>
+        <?php endif; ?>
 
-            Image: <input type="file" name="image" id="imageInput" required><br><br>
+        <div class="story-grid">
+            <?php
+            if (!is_dir($root_stories)) mkdir($root_stories, 0777, true);
+            $dirs = array_filter(glob($root_stories . '*'), 'is_dir');
+            foreach ($dirs as $dir):
+                $name = basename($dir);
+                $display_name = ucwords(str_replace('-', ' ', $name));
+            ?>
+                <div class="story-card">
+                    <a href="<?php echo $dir; ?>/index.php" target="_blank" class="card-link">
+                        <span class="folder-icon">📁</span>
+                        <strong><?php echo $display_name; ?></strong>
+                    </a>
+                    <?php if ($isAdmin): ?>
+                        <div class="card-actions">
+                            <button class="action-btn" onclick="renameFolder('<?php echo $name; ?>')">Rename</button>
+                            <a href="<?php echo $dir; ?>/admin.php" target="_blank" class="action-btn">Admin</a>
+                            <button class="action-btn btn-delete" onclick="deleteFolder('<?php echo $name; ?>')">Delete</button>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
 
-            Line 1: <input type="text" name="line1" maxlength="200"><br>
-            Line 2: <input type="text" name="line2" maxlength="200"><br>
-            Line 3: <input type="text" name="line3" maxlength="200">
-            <div class="char-count">Limit: 200 characters per line</div><br>
-
-            <button type="submit" style="padding: 10px 20px; cursor: pointer;">Upload Story</button>
+    <?php if ($isAdmin): ?>
+        <form id="masterForm" method="post" style="display:none;">
+            <input type="hidden" name="action" id="formAction">
+            <input type="hidden" name="old_name" id="oldNameInput">
+            <input type="hidden" name="new_name" id="newNameInput">
+            <input type="hidden" name="folder_name" id="folderNameInput">
         </form>
-    </div>
-    <?php
-    $json_raw = file_exists("data.json") ? file_get_contents("data.json") : "[]";
-    $data = json_decode($json_raw, true) ?? [];
 
-    foreach ($data as $i => $story) {
-        echo "<div class='story' id='story$i'>";
-        echo "<img src='uploads/{$story['image']}' class='clickable' data-src='uploads/{$story['image']}'>";
-        echo "<div class='text'>";
-        echo "<p>" . htmlspecialchars($story['line1']) . "</p>";
-        echo "<p>" . htmlspecialchars($story['line2']) . "</p>";
-        echo "<p>" . htmlspecialchars($story['line3']) . "</p>";
-        echo "</div></div>";
-    }
-    ?>
-
-    <div id="lightbox" onclick="closeLightbox()">
-        <span id="close">&times;</span>
-        <img id="lightbox-img">
-    </div>
-
-    <script>
-        let current = 0;
-        const stories = document.querySelectorAll(".story");
-
-        const imageInput = document.getElementById('imageInput');
-        const previewImg = document.getElementById('preview-img');
-        const previewContainer = document.getElementById('preview-container');
-
-        imageInput.onchange = evt => {
-            const [file] = imageInput.files;
-            if (file) {
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert("Only JPG, PNG, GIF, and WEBP allowed!");
-                    imageInput.value = "";
-                    previewContainer.style.display = "none";
-                    return;
+        <script>
+            function renameFolder(oldName) {
+                let readable = oldName.replace(/-/g, ' ');
+                let newName = prompt("Rename story '" + readable + "' to:", readable);
+                if (newName && newName.trim() !== "" && newName.trim().toLowerCase() !== readable.toLowerCase()) {
+                    document.getElementById('formAction').value = 'rename';
+                    document.getElementById('oldNameInput').value = oldName;
+                    document.getElementById('newNameInput').value = newName;
+                    document.getElementById('masterForm').submit();
                 }
-                previewImg.src = URL.createObjectURL(file);
-                previewContainer.style.display = "block";
             }
-        }
 
-        window.addEventListener("load", () => {
-            if (stories.length > 0) {
-                stories[0].scrollIntoView({
-                    behavior: "auto"
-                });
-                updateCurrentIndex();
-            }
-        });
-
-        function showStory(index) {
-            if (index < 0) index = 0;
-            if (index >= stories.length) index = stories.length - 1;
-            current = index;
-            stories[current].scrollIntoView({
-                behavior: "smooth"
-            });
-        }
-
-        function nextStory() {
-            showStory(current + 1);
-        }
-
-        function prevStory() {
-            showStory(current - 1);
-        }
-
-        function goTop() {
-            if (stories.length > 0) showStory(0);
-        }
-
-        function goBottom() {
-            if (stories.length > 0) showStory(stories.length - 1);
-        }
-
-        function updateCurrentIndex() {
-            let closestIndex = 0;
-            let minDistance = Infinity;
-            stories.forEach((story, index) => {
-                const rect = story.getBoundingClientRect();
-                const distance = Math.abs(rect.top);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    closestIndex = index;
+            function deleteFolder(name) {
+                let readable = name.replace(/-/g, ' ');
+                if (confirm("ARE YOU SURE?\n\nThis will permanently delete '" + readable + "' and all images. This cannot be undone.")) {
+                    document.getElementById('formAction').value = 'delete';
+                    document.getElementById('folderNameInput').value = name;
+                    document.getElementById('masterForm').submit();
                 }
-            });
-            current = closestIndex;
-        }
-
-        window.addEventListener("scroll", updateCurrentIndex);
-
-        const lightbox = document.getElementById("lightbox");
-        const lightboxImg = document.getElementById("lightbox-img");
-
-        document.querySelectorAll(".clickable").forEach(img => {
-            img.addEventListener("click", () => {
-                lightbox.style.display = "flex";
-                lightboxImg.src = img.dataset.src;
-            });
-        });
-
-        function closeLightbox() {
-            lightbox.style.display = "none";
-        }
-    </script>
+            }
+        </script>
+    <?php endif; ?>
 </body>
 
 </html>

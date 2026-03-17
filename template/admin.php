@@ -1,10 +1,12 @@
 <?php
-// Simple Password Protection
-$password = "your_secret_password";
-if (!isset($_SERVER['PHP_AUTH_USER']) || $_SERVER['PHP_AUTH_PW'] != $password) {
-    header('WWW-Authenticate: Basic realm="My Dashboard"');
-    header('HTTP/1.0 401 Unauthorized');
-    echo 'Access Denied';
+ob_start(); // Buffer output to prevent "Headers already sent" errors
+session_start();
+
+// 1. SESSION CHECK
+// Ensures only the person logged in via hub.php can access this dashboard
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    // Redirects back to the root hub.php
+    header("Location: ../../hub.php");
     exit;
 }
 
@@ -12,10 +14,11 @@ $json_file = "data.json";
 $file_exists = file_exists($json_file);
 $data = $file_exists ? (json_decode(file_get_contents($json_file), true) ?? []) : [];
 
+// HANDLE DELETION
 if (isset($_GET['delete']) && $file_exists) {
     $index = $_GET['delete'];
     if (isset($data[$index])) {
-        // 1. Delete the physical file
+        // 1. Delete the physical image file
         $file_to_delete = "uploads/" . $data[$index]['image'];
         if (file_exists($file_to_delete)) {
             unlink($file_to_delete);
@@ -32,7 +35,6 @@ if (isset($_GET['delete']) && $file_exists) {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -76,7 +78,7 @@ if (isset($_GET['delete']) && $file_exists) {
             font-size: 1.8rem;
         }
 
-        .view-site {
+        .view-story {
             color: #00aaff;
             text-decoration: none;
             padding: 8px 16px;
@@ -86,7 +88,7 @@ if (isset($_GET['delete']) && $file_exists) {
             white-space: nowrap;
         }
 
-        .view-site:hover {
+        .view-story:hover {
             background: #00aaff;
             color: #fff;
         }
@@ -178,10 +180,6 @@ if (isset($_GET['delete']) && $file_exists) {
         }
 
         @media screen and (max-width: 768px) {
-            .container {
-                max-width: 100%;
-            }
-
             thead {
                 display: none;
             }
@@ -238,11 +236,18 @@ if (isset($_GET['delete']) && $file_exists) {
 </head>
 
 <body>
-
     <div class="container">
         <header>
             <h1>Story Management</h1>
-            <a href="index.php" class="view-site">View Site</a>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <a href="index.php" class="view-story">View Story</a>
+                <a href="../../hub.php?logout=1"
+                    style="color: #666; text-decoration: none; font-size: 12px; border: 1px solid #333; padding: 7px 12px; border-radius: 6px; transition: 0.3s;"
+                    onmouseover="this.style.color='#ff4444'; this.style.borderColor='#ff4444';"
+                    onmouseout="this.style.color='#666'; this.style.borderColor='#333';">
+                    Logout
+                </a>
+            </div>
         </header>
 
         <?php if (!$file_exists || empty($data)): ?>
@@ -285,7 +290,6 @@ if (isset($_GET['delete']) && $file_exists) {
             </table>
         <?php endif; ?>
     </div>
-
 </body>
 
 </html>
