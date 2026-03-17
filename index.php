@@ -1,8 +1,10 @@
 <?php
-ob_start();
+ob_start(); // Start output buffering to prevent "Headers already sent" errors
 session_start();
 
-// Simple check: You are either admin or you are a visitor.
+// 1. SESSION CHECK (Modified)
+// We no longer redirect to hub.php automatically. 
+// We just check if the admin is logged in or if it's a guest.
 $isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
 
 $root_stories = 'stories/';
@@ -19,14 +21,9 @@ function deleteDirectory($dir)
     return rmdir($dir);
 }
 
-// --- ADMIN ONLY ACTIONS ---
-if (!$isAdmin && ($_SERVER['REQUEST_METHOD'] == 'POST' || isset($_GET['msg']))) {
-    // If a non-admin tries to post data, stop them.
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') die("Unauthorized");
-}
-
-// Handle Delete
-if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empty($_POST['folder_name'])) {
+// --- HANDLE DELETE (Admin Only) ---
+if (isset($_POST['action']) && $_POST['action'] == 'delete' && !empty($_POST['folder_name'])) {
+    if (!$isAdmin) die("Unauthorized"); // Guests cannot trigger this
     $target = $root_stories . basename($_POST['folder_name']);
     if (file_exists($target) && is_dir($target)) {
         deleteDirectory($target);
@@ -35,11 +32,13 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empt
     exit;
 }
 
-// Handle Rename
-if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
+// --- HANDLE RENAME (Admin Only) ---
+if (isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
+    if (!$isAdmin) die("Unauthorized"); // Guests cannot trigger this
     $old_folder = $root_stories . basename($_POST['old_name']);
     $new_safe_name = strtolower(preg_replace('/[^A-Za-z0-9\-]/', '-', $_POST['new_name']));
     $new_folder = $root_stories . $new_safe_name;
+
     if (file_exists($old_folder) && !file_exists($new_folder)) {
         rename($old_folder, $new_folder);
     }
@@ -47,10 +46,12 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empt
     exit;
 }
 
-// Handle Create
-if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name']) && !isset($_POST['action'])) {
+// --- HANDLE CREATE (Admin Only) ---
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name']) && !isset($_POST['action'])) {
+    if (!$isAdmin) die("Unauthorized"); // Guests cannot trigger this
     $folder_name = strtolower(preg_replace('/[^A-Za-z0-9\-]/', '-', $_POST['story_name']));
     $target_dir = $root_stories . $folder_name;
+
     if (!file_exists($target_dir)) {
         mkdir($target_dir, 0777, true);
         mkdir($target_dir . '/uploads', 0777, true);
@@ -262,34 +263,34 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
     </div>
 
     <?php if ($isAdmin): ?>
-        <form id="masterForm" method="post" style="display:none;">
-            <input type="hidden" name="action" id="formAction">
-            <input type="hidden" name="old_name" id="oldNameInput">
-            <input type="hidden" name="new_name" id="newNameInput">
-            <input type="hidden" name="folder_name" id="folderNameInput">
-        </form>
+    <form id="masterForm" method="post" style="display:none;">
+        <input type="hidden" name="action" id="formAction">
+        <input type="hidden" name="old_name" id="oldNameInput">
+        <input type="hidden" name="new_name" id="newNameInput">
+        <input type="hidden" name="folder_name" id="folderNameInput">
+    </form>
 
-        <script>
-            function renameFolder(oldName) {
-                let readable = oldName.replace(/-/g, ' ');
-                let newName = prompt("Rename story '" + readable + "' to:", readable);
-                if (newName && newName.trim() !== "" && newName.trim().toLowerCase() !== readable.toLowerCase()) {
-                    document.getElementById('formAction').value = 'rename';
-                    document.getElementById('oldNameInput').value = oldName;
-                    document.getElementById('newNameInput').value = newName;
-                    document.getElementById('masterForm').submit();
-                }
+    <script>
+        function renameFolder(oldName) {
+            let readable = oldName.replace(/-/g, ' ');
+            let newName = prompt("Rename story '" + readable + "' to:", readable);
+            if (newName && newName.trim() !== "" && newName.trim().toLowerCase() !== readable.toLowerCase()) {
+                document.getElementById('formAction').value = 'rename';
+                document.getElementById('oldNameInput').value = oldName;
+                document.getElementById('newNameInput').value = newName;
+                document.getElementById('masterForm').submit();
             }
+        }
 
-            function deleteFolder(name) {
-                let readable = name.replace(/-/g, ' ');
-                if (confirm("ARE YOU SURE?\n\nThis will permanently delete '" + readable + "' and all images. This cannot be undone.")) {
-                    document.getElementById('formAction').value = 'delete';
-                    document.getElementById('folderNameInput').value = name;
-                    document.getElementById('masterForm').submit();
-                }
+        function deleteFolder(name) {
+            let readable = name.replace(/-/g, ' ');
+            if (confirm("ARE YOU SURE?\n\nThis will permanently delete '" + readable + "' and all images. This cannot be undone.")) {
+                document.getElementById('formAction').value = 'delete';
+                document.getElementById('folderNameInput').value = name;
+                document.getElementById('masterForm').submit();
             }
-        </script>
+        }
+    </script>
     <?php endif; ?>
 </body>
 
