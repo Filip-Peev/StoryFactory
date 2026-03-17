@@ -2,6 +2,15 @@
 ob_start(); // Buffer output to prevent "Headers already sent" errors
 session_start();
 
+// Fallback: Use the folder name logic you already have
+$folder_name = basename(getcwd());
+$display_name = ucwords(str_replace('-', ' ', $folder_name));
+
+// The Upgrade: If the 'note' exists, use the exact True Name
+if (file_exists('title.txt')) {
+    $display_name = file_get_contents('title.txt');
+}
+
 // 1. SESSION CHECK
 // Ensures only the person logged in via hub.php can access this dashboard
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -40,8 +49,9 @@ if (isset($_GET['delete']) && $file_exists) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Story Dashboard</title>
+    <title><?php echo htmlspecialchars($display_name); ?> - Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%23222%22 stroke=%22%23ffaa00%22 stroke-width=%228%22/><text y=%2260%22 font-size=%2250%22 font-weight=%22bold%22 fill=%22%23ffaa00%22 font-family=%22Arial%22 x=%2210%22>S</text><text y=%2285%22 font-size=%2250%22 font-weight=%22bold%22 fill=%22white%22 font-family=%22Arial%22 x=%2245%22>F</text></svg>">
     <style>
         * {
             box-sizing: border-box;
@@ -179,6 +189,59 @@ if (isset($_GET['delete']) && $file_exists) {
             color: #fff;
         }
 
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 45px;
+            height: 45px;
+            background: #222;
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
+        }
+
+        .brand-icon::before {
+            content: 'S';
+            color: #ffaa00;
+            font-weight: 900;
+            font-size: 24px;
+            position: absolute;
+            left: 8px;
+            top: 2px;
+        }
+
+        .brand-icon::after {
+            content: 'F';
+            color: #fff;
+            font-weight: 900;
+            font-size: 24px;
+            position: absolute;
+            right: 8px;
+            bottom: 2px;
+        }
+
+        .brand-text {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #eee;
+        }
+
+        .brand-text span {
+            color: #ffaa00;
+            font-weight: 900;
+        }
+
         @media screen and (max-width: 768px) {
             thead {
                 display: none;
@@ -238,9 +301,19 @@ if (isset($_GET['delete']) && $file_exists) {
 <body>
     <div class="container">
         <header>
-            <h1>Story Management</h1>
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <a href="../../" class="logo-container">
+                    <div class="brand-icon"></div>
+                    <div class="brand-text">Story<span>Factory</span></div>
+                </a>
+
+                <h1 style="border-left: 1px solid #333; padding-left: 30px; opacity: 0.8;">
+                    Story Management
+                </h1>
+            </div>
+
             <div style="display: flex; align-items: center; gap: 15px;">
-                <a href="index.php" class="view-story">View Story</a>
+                <a href="index.php" class="view-story" target="_blank">View Story</a>
                 <a href="../../hub.php?logout=1"
                     style="color: #666; text-decoration: none; font-size: 12px; border: 1px solid #333; padding: 7px 12px; border-radius: 6px; transition: 0.3s;"
                     onmouseover="this.style.color='#ff4444'; this.style.borderColor='#ff4444';"
