@@ -1,8 +1,10 @@
 <?php
-ob_start();
+ob_start(); // Start output buffering to prevent "Headers already sent" errors
 session_start();
 
-// Simple check: You are either admin or you are a visitor.
+// 1. SESSION CHECK (Modified)
+// We no longer redirect to hub.php automatically. 
+// We just check if the admin is logged in or if it's a guest.
 $isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
 
 $root_stories = 'stories/';
@@ -34,8 +36,9 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empt
     exit;
 }
 
-// Handle Rename
-if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
+// --- HANDLE RENAME (Admin Only) ---
+if (isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
+    if (!$isAdmin) die("Unauthorized"); // Guests cannot trigger this
     $old_folder = $root_stories . basename($_POST['old_name']);
 
     // 1. Cleanup the True Name (Remove HTML/Quotes for safety)
@@ -414,6 +417,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                     document.getElementById('masterForm').submit();
                 }
             }
+        }
 
             function deleteFolder(folderName, trueName) {
                 if (confirm("ARE YOU SURE?\n\nThis will permanently delete '" + trueName + "' and all contents. This cannot be undone.")) {
@@ -422,7 +426,8 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                     document.getElementById('masterForm').submit();
                 }
             }
-        </script>
+        }
+    </script>
     <?php endif; ?>
 </body>
 
