@@ -1,15 +1,11 @@
 <?php
-ob_start(); // Start output buffering to prevent "Headers already sent" errors
+ob_start();
 session_start();
 
-// 1. SESSION CHECK (Modified)
-// We no longer redirect to hub.php automatically. 
-// We just check if the admin is logged in or if it's a guest.
 $isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
 
 $root_stories = 'stories/';
 
-// Helper function to delete a folder
 function deleteDirectory($dir)
 {
     if (!file_exists($dir)) return true;
@@ -21,12 +17,10 @@ function deleteDirectory($dir)
     return rmdir($dir);
 }
 
-// --- ADMIN ONLY ACTIONS ---
 if (!$isAdmin && ($_SERVER['REQUEST_METHOD'] == 'POST' || isset($_GET['msg']))) {
     if ($_SERVER['REQUEST_METHOD'] == 'POST') die("Unauthorized");
 }
 
-// Handle Delete
 if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empty($_POST['folder_name'])) {
     $target = $root_stories . basename($_POST['folder_name']);
     if (file_exists($target) && is_dir($target)) {
@@ -36,21 +30,16 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empt
     exit;
 }
 
-// --- HANDLE RENAME (Admin Only) ---
-if (isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
-    if (!$isAdmin) die("Unauthorized"); // Guests cannot trigger this
+if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
     $old_folder = $root_stories . basename($_POST['old_name']);
 
-    // 1. Cleanup the True Name (Remove HTML/Quotes for safety)
     $new_true_name = preg_replace('/[<>\"\'&]/', '', strip_tags($_POST['new_name']));
 
-    // 2. Strict cleanup for folder name (URL-safe)
     $new_safe_name = strtolower(preg_replace('/[^A-Za-z0-9]/', ' ', $new_true_name));
     $new_safe_name = str_replace(' ', '-', trim(preg_replace('/ +/', ' ', $new_safe_name)));
     $new_folder = $root_stories . $new_safe_name;
 
     if (file_exists($old_folder)) {
-        // Update the title.txt with the cleaned True Name
         file_put_contents($old_folder . '/title.txt', $new_true_name);
 
         if (!file_exists($new_folder)) {
@@ -61,7 +50,6 @@ if (isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['ol
     exit;
 }
 
-// Handle Create
 if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name']) && !isset($_POST['action'])) {
     $original_name = preg_replace('/[<>\"\'&]/', '', strip_tags($_POST['story_name']));
     $folder_name = strtolower(preg_replace('/[^A-Za-z0-9]/', ' ', $original_name));
@@ -357,6 +345,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
         <div class="story-grid">
             <?php
             if (!is_dir($root_stories)) mkdir($root_stories, 0777, true);
+
             $dirs = array_filter(glob($root_stories . '*'), 'is_dir');
 
             foreach ($dirs as $dir):
@@ -365,23 +354,31 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                 $date_file = $dir . '/date.txt';
 
                 $display_name = file_exists($title_file) ? file_get_contents($title_file) : ucwords(str_replace('-', ' ', $folder_name));
-                $display_date = file_exists($date_file) ? file_get_contents($date_file) : date("F j, Y", filectime($dir));
 
-                $images = glob($dir . "/uploads/*.{jpg,jpeg,png,webp,gif}", GLOB_BRACE);
-                $thumbnail = !empty($images) ? $images[0] : null;
+                $display_date = file_exists($date_file) ? file_get_contents($date_file) : date("F j, Y", filectime($dir));
+                $custom_thumb = glob($dir . "/thumbnail.{jpg,jpeg,png,webp,gif}", GLOB_BRACE);
+
+                if (!empty($custom_thumb)) {
+                    $thumbnail = $custom_thumb[0];
+                } else {
+                    $uploaded_images = glob($dir . "/uploads/*.{jpg,jpeg,png,webp,gif}", GLOB_BRACE);
+                    $thumbnail = !empty($uploaded_images) ? $uploaded_images[0] : null;
+                }
             ?>
                 <div class="story-card">
                     <a href="<?php echo $dir; ?>/index.php" target="_blank" class="card-link" style="padding:0;">
                         <div class="card-preview-box">
                             <?php if ($thumbnail): ?>
-                                <img src="<?php echo $thumbnail; ?>" alt="Preview">
+                                <img src="<?php echo $thumbnail; ?>" alt="Story Preview">
                             <?php else: ?>
                                 <div class="no-image-text">No Images Yet</div>
                             <?php endif; ?>
                         </div>
 
                         <div style="padding: 20px;">
-                            <strong><?php echo htmlspecialchars($display_name); ?></strong>
+                            <strong style="display: block; font-size: 16px; margin-bottom: 5px;">
+                                <?php echo htmlspecialchars($display_name); ?>
+                            </strong>
                             <span class="story-date"><?php echo $display_date; ?></span>
                         </div>
                     </a>
@@ -417,7 +414,6 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                     document.getElementById('masterForm').submit();
                 }
             }
-        }
 
             function deleteFolder(folderName, trueName) {
                 if (confirm("ARE YOU SURE?\n\nThis will permanently delete '" + trueName + "' and all contents. This cannot be undone.")) {
@@ -426,8 +422,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                     document.getElementById('masterForm').submit();
                 }
             }
-        }
-    </script>
+        </script>
     <?php endif; ?>
 </body>
 

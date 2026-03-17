@@ -1,11 +1,9 @@
 <?php
 session_start();
 
-// Fallback: Use the folder name logic you already have
 $folder_name = basename(getcwd());
 $display_name = ucwords(str_replace('-', ' ', $folder_name));
 
-// The Upgrade: If the 'note' exists, use the exact True Name
 if (file_exists('title.txt')) {
     $display_name = file_get_contents('title.txt');
 }
@@ -297,7 +295,6 @@ if (file_exists('title.txt')) {
             box-shadow: 0 5px 15px rgba(255, 170, 0, 0.3);
         }
 
-        /* Custom "Browse" Button */
         .custom-file-upload {
             display: inline-block;
             padding: 8px 20px;
@@ -317,7 +314,6 @@ if (file_exists('title.txt')) {
             color: #fff;
         }
 
-        /* Hide the actual file input */
         #imageInput {
             display: none;
         }
