@@ -1,10 +1,12 @@
 <?php
 session_start();
 
-$admin_password = "your_secret_password";
+$env = parse_ini_file('.env');
+
+$admin_password = $env['ADMIN_PASSWORD'] ?? null;
 
 if (isset($_POST['action']) && $_POST['action'] == 'login') {
-    if ($_POST['password'] === $admin_password) {
+    if ($admin_password && $_POST['password'] === $admin_password) {
         $_SESSION['role'] = 'admin';
         header("Location: index.php");
         exit;
@@ -13,7 +15,6 @@ if (isset($_POST['action']) && $_POST['action'] == 'login') {
     }
 }
 
-// Logout logic - Redirects to index.php (the public gallery)
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: index.php");
