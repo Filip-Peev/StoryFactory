@@ -1,20 +1,15 @@
 <?php
-ob_start(); // Buffer output to prevent "Headers already sent" errors
+ob_start();
 session_start();
 
-// Fallback: Use the folder name logic you already have
 $folder_name = basename(getcwd());
 $display_name = ucwords(str_replace('-', ' ', $folder_name));
 
-// The Upgrade: If the 'note' exists, use the exact True Name
 if (file_exists('title.txt')) {
     $display_name = file_get_contents('title.txt');
 }
 
-// 1. SESSION CHECK
-// Ensures only the person logged in via hub.php can access this dashboard
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    // Redirects back to the root hub.php
     header("Location: ../../hub.php");
     exit;
 }
@@ -23,20 +18,32 @@ $json_file = "data.json";
 $file_exists = file_exists($json_file);
 $data = $file_exists ? (json_decode(file_get_contents($json_file), true) ?? []) : [];
 
-// HANDLE DELETION
+if (isset($_GET['set_thumb']) && $file_exists) {
+    $index = $_GET['set_thumb'];
+    if (isset($data[$index])) {
+        $source = "uploads/" . $data[$index]['image'];
+        $ext = pathinfo($source, PATHINFO_EXTENSION);
+
+        $old_thumbs = glob("thumbnail.{jpg,jpeg,png,webp,gif}", GLOB_BRACE);
+        foreach ($old_thumbs as $ot) unlink($ot);
+
+        if (copy($source, "thumbnail." . $ext)) {
+            header("Location: admin.php?msg=thumb_set");
+            exit;
+        }
+    }
+}
+
 if (isset($_GET['delete']) && $file_exists) {
     $index = $_GET['delete'];
     if (isset($data[$index])) {
-        // 1. Delete the physical image file
         $file_to_delete = "uploads/" . $data[$index]['image'];
         if (file_exists($file_to_delete)) {
             unlink($file_to_delete);
         }
 
-        // 2. Remove from array and re-index
         array_splice($data, $index, 1);
 
-        // 3. Save back to JSON
         file_put_contents($json_file, json_encode($data, JSON_PRETTY_PRINT));
 
         header("Location: admin.php");
@@ -58,13 +65,12 @@ if (isset($_GET['delete']) && $file_exists) {
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background: #111;
             color: #fff;
             margin: 0;
             padding: 20px;
             line-height: 1.5;
-            overflow-x: hidden;
         }
 
         .container {
@@ -137,7 +143,7 @@ if (isset($_GET['delete']) && $file_exists) {
         }
 
         .col-action {
-            width: 130px;
+            width: 180px;
             text-align: right;
             padding-right: 20px;
         }
@@ -172,16 +178,30 @@ if (isset($_GET['delete']) && $file_exists) {
             font-size: 13px;
         }
 
-        .btn-delete {
-            color: #ff4444;
+        .btn-action {
             text-decoration: none;
-            font-size: 13px;
-            padding: 8px 14px;
-            border: 1px solid #ff4444;
-            border-radius: 6px;
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 4px;
             transition: 0.2s;
             display: inline-block;
             white-space: nowrap;
+        }
+
+        .btn-thumb {
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+            margin-right: 5px;
+        }
+
+        .btn-thumb:hover {
+            background: #ffaa00;
+            color: #000;
+        }
+
+        .btn-delete {
+            color: #ff4444;
+            border: 1px solid #ff4444;
         }
 
         .btn-delete:hover {
@@ -189,6 +209,7 @@ if (isset($_GET['delete']) && $file_exists) {
             color: #fff;
         }
 
+        /* Factory Logo Styles */
         .logo-container {
             display: flex;
             align-items: center;
@@ -242,6 +263,16 @@ if (isset($_GET['delete']) && $file_exists) {
             font-weight: 900;
         }
 
+        .status-msg {
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+
         @media screen and (max-width: 768px) {
             thead {
                 display: none;
@@ -271,7 +302,6 @@ if (isset($_GET['delete']) && $file_exists) {
 
             .col-action {
                 text-align: center;
-                padding-right: 5px;
             }
 
             img.thumb {
@@ -281,19 +311,10 @@ if (isset($_GET['delete']) && $file_exists) {
                 max-width: 250px;
             }
 
-            .btn-delete {
+            .btn-action {
                 width: 100%;
-                display: block;
+                margin-bottom: 10px;
             }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            background: #1a1a1a;
-            border-radius: 8px;
-            border: 2px dashed #333;
-            color: #555;
         }
     </style>
 </head>
@@ -306,27 +327,22 @@ if (isset($_GET['delete']) && $file_exists) {
                     <div class="brand-icon"></div>
                     <div class="brand-text">Story<span>Factory</span></div>
                 </a>
-
-                <h1 style="border-left: 1px solid #333; padding-left: 30px; opacity: 0.8;">
-                    Story Management
-                </h1>
+                <h1 style="border-left: 1px solid #333; padding-left: 30px; opacity: 0.8;">Management</h1>
             </div>
 
             <div style="display: flex; align-items: center; gap: 15px;">
                 <a href="index.php" class="view-story" target="_blank">View Story</a>
-                <a href="../../hub.php?logout=1"
-                    style="color: #666; text-decoration: none; font-size: 12px; border: 1px solid #333; padding: 7px 12px; border-radius: 6px; transition: 0.3s;"
-                    onmouseover="this.style.color='#ff4444'; this.style.borderColor='#ff4444';"
-                    onmouseout="this.style.color='#666'; this.style.borderColor='#333';">
-                    Logout
-                </a>
+                <a href="../../hub.php?logout=1" style="color: #666; text-decoration: none; font-size: 12px; border: 1px solid #333; padding: 7px 12px; border-radius: 6px;">Logout</a>
             </div>
         </header>
 
+        <?php if (isset($_GET['msg']) && $_GET['msg'] == 'thumb_set'): ?>
+            <div class="status-msg">Featured thumbnail updated!</div>
+        <?php endif; ?>
+
         <?php if (!$file_exists || empty($data)): ?>
-            <div class="empty-state">
-                <h2>No data found</h2>
-                <p>The <strong>data.json</strong> file doesn't exist yet or has no stories.</p>
+            <div style="text-align: center; padding: 80px 20px; background: #1a1a1a; border-radius: 8px; border: 2px dashed #333; color: #555;">
+                <h2>No images uploaded yet</h2>
             </div>
         <?php else: ?>
             <table>
@@ -335,7 +351,7 @@ if (isset($_GET['delete']) && $file_exists) {
                         <th class="col-img">Preview</th>
                         <th class="col-file">Filename</th>
                         <th>Story Content</th>
-                        <th class="col-action">Action</th>
+                        <th class="col-action">Control</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -353,9 +369,8 @@ if (isset($_GET['delete']) && $file_exists) {
                                 <div class="story-text line3"><?php echo htmlspecialchars($story['line3'] ?? ''); ?></div>
                             </td>
                             <td class="col-action">
-                                <a href="?delete=<?php echo $i; ?>"
-                                    class="btn-delete"
-                                    onclick="return confirm('Delete this story permanently?')">Delete</a>
+                                <a href="?set_thumb=<?php echo $i; ?>" class="btn-action btn-thumb">Set Cover</a>
+                                <a href="?delete=<?php echo $i; ?>" class="btn-action btn-delete" onclick="return confirm('Delete image?')">Delete</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Define your admin password here
 $admin_password = "your_secret_password";
 
 if (isset($_POST['action']) && $_POST['action'] == 'login') {
@@ -28,7 +27,6 @@ if (isset($_GET['logout'])) {
     <title>Admin Login - StoryHub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* New S+F Factory Logo */
         .logo-container {
             display: flex;
             align-items: center;
@@ -41,7 +39,6 @@ if (isset($_GET['logout'])) {
             height: 45px;
             background: #222;
             border: 2px solid #ffaa00;
-            /* Safety Orange/Yellow */
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -50,7 +47,6 @@ if (isset($_GET['logout'])) {
             box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
         }
 
-        /* Creating the S and F overlap look */
         .brand-icon::before {
             content: 'S';
             color: #ffaa00;
@@ -73,7 +69,6 @@ if (isset($_GET['logout'])) {
 
         .brand-text {
             font-family: 'Orbitron', 'Segoe UI', sans-serif;
-            /* A techy font if available */
             font-size: 22px;
             text-transform: uppercase;
             letter-spacing: 2px;

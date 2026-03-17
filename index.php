@@ -7,7 +7,6 @@ $isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
 
 $root_stories = 'stories/';
 
-// Helper function to delete a folder
 function deleteDirectory($dir)
 {
     if (!file_exists($dir)) return true;
@@ -19,12 +18,10 @@ function deleteDirectory($dir)
     return rmdir($dir);
 }
 
-// --- ADMIN ONLY ACTIONS ---
 if (!$isAdmin && ($_SERVER['REQUEST_METHOD'] == 'POST' || isset($_GET['msg']))) {
     if ($_SERVER['REQUEST_METHOD'] == 'POST') die("Unauthorized");
 }
 
-// Handle Delete
 if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empty($_POST['folder_name'])) {
     $target = $root_stories . basename($_POST['folder_name']);
     if (file_exists($target) && is_dir($target)) {
@@ -38,16 +35,13 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empt
 if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
     $old_folder = $root_stories . basename($_POST['old_name']);
 
-    // 1. Cleanup the True Name (Remove HTML/Quotes for safety)
     $new_true_name = preg_replace('/[<>\"\'&]/', '', strip_tags($_POST['new_name']));
 
-    // 2. Strict cleanup for folder name (URL-safe)
     $new_safe_name = strtolower(preg_replace('/[^A-Za-z0-9]/', ' ', $new_true_name));
     $new_safe_name = str_replace(' ', '-', trim(preg_replace('/ +/', ' ', $new_safe_name)));
     $new_folder = $root_stories . $new_safe_name;
 
     if (file_exists($old_folder)) {
-        // Update the title.txt with the cleaned True Name
         file_put_contents($old_folder . '/title.txt', $new_true_name);
 
         if (!file_exists($new_folder)) {
@@ -58,7 +52,6 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empt
     exit;
 }
 
-// Handle Create
 if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name']) && !isset($_POST['action'])) {
     $original_name = preg_replace('/[<>\"\'&]/', '', strip_tags($_POST['story_name']));
     $folder_name = strtolower(preg_replace('/[^A-Za-z0-9]/', ' ', $original_name));
@@ -325,6 +318,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
         <div class="story-grid">
             <?php
             if (!is_dir($root_stories)) mkdir($root_stories, 0777, true);
+
             $dirs = array_filter(glob($root_stories . '*'), 'is_dir');
             foreach ($dirs as $dir):
                 $folder_name = basename($dir);
