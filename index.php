@@ -2,6 +2,7 @@
 ob_start();
 session_start();
 
+// Simple check: You are either admin or you are a visitor.
 $isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
 
 $root_stories = 'stories/';
@@ -30,6 +31,7 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empt
     exit;
 }
 
+// Handle Rename
 if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
     $old_folder = $root_stories . basename($_POST['old_name']);
 
@@ -285,35 +287,6 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
             margin-right: 5px;
             font-size: 8px;
         }
-
-        .card-preview-box {
-            width: 100%;
-            height: 160px;
-            background: #111;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border-bottom: 1px solid #333;
-        }
-
-        .card-preview-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .card-link:hover .card-preview-box img {
-            transform: scale(1.1);
-        }
-
-        .no-image-text {
-            font-size: 11px;
-            color: #444;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
     </style>
 </head>
 
@@ -347,7 +320,6 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
             if (!is_dir($root_stories)) mkdir($root_stories, 0777, true);
 
             $dirs = array_filter(glob($root_stories . '*'), 'is_dir');
-
             foreach ($dirs as $dir):
                 $folder_name = basename($dir);
                 $title_file = $dir . '/title.txt';
@@ -356,33 +328,13 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                 $display_name = file_exists($title_file) ? file_get_contents($title_file) : ucwords(str_replace('-', ' ', $folder_name));
 
                 $display_date = file_exists($date_file) ? file_get_contents($date_file) : date("F j, Y", filectime($dir));
-                $custom_thumb = glob($dir . "/thumbnail.{jpg,jpeg,png,webp,gif}", GLOB_BRACE);
-
-                if (!empty($custom_thumb)) {
-                    $thumbnail = $custom_thumb[0];
-                } else {
-                    $uploaded_images = glob($dir . "/uploads/*.{jpg,jpeg,png,webp,gif}", GLOB_BRACE);
-                    $thumbnail = !empty($uploaded_images) ? $uploaded_images[0] : null;
-                }
             ?>
                 <div class="story-card">
-                    <a href="<?php echo $dir; ?>/index.php" target="_blank" class="card-link" style="padding:0;">
-                        <div class="card-preview-box">
-                            <?php if ($thumbnail): ?>
-                                <img src="<?php echo $thumbnail; ?>" alt="Story Preview">
-                            <?php else: ?>
-                                <div class="no-image-text">No Images Yet</div>
-                            <?php endif; ?>
-                        </div>
-
-                        <div style="padding: 20px;">
-                            <strong style="display: block; font-size: 16px; margin-bottom: 5px;">
-                                <?php echo htmlspecialchars($display_name); ?>
-                            </strong>
-                            <span class="story-date"><?php echo $display_date; ?></span>
-                        </div>
+                    <a href="<?php echo $dir; ?>/index.php" target="_blank" class="card-link">
+                        <span class="folder-icon">📁</span>
+                        <strong><?php echo htmlspecialchars($display_name); ?></strong>
+                        <span class="story-date"><?php echo $display_date; ?></span>
                     </a>
-
                     <?php if ($isAdmin): ?>
                         <div class="card-actions">
                             <button class="action-btn" onclick="renameFolder('<?php echo $folder_name; ?>', '<?php echo addslashes($display_name); ?>')">Rename</button>

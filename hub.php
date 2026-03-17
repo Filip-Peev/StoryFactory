@@ -13,6 +13,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'login') {
     }
 }
 
+// Logout logic - Redirects to index.php (the public gallery)
 if (isset($_GET['logout'])) {
     session_destroy();
     header("Location: index.php");
