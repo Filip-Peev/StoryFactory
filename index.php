@@ -21,7 +21,6 @@ function deleteDirectory($dir)
 
 // --- ADMIN ONLY ACTIONS ---
 if (!$isAdmin && ($_SERVER['REQUEST_METHOD'] == 'POST' || isset($_GET['msg']))) {
-    // If a non-admin tries to post data, stop them.
     if ($_SERVER['REQUEST_METHOD'] == 'POST') die("Unauthorized");
 }
 
@@ -38,10 +37,22 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'delete' && !empt
 // Handle Rename
 if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empty($_POST['old_name']) && !empty($_POST['new_name'])) {
     $old_folder = $root_stories . basename($_POST['old_name']);
-    $new_safe_name = strtolower(preg_replace('/[^A-Za-z0-9\-]/', '-', $_POST['new_name']));
+
+    // 1. Cleanup the True Name (Remove HTML/Quotes for safety)
+    $new_true_name = preg_replace('/[<>\"\'&]/', '', strip_tags($_POST['new_name']));
+
+    // 2. Strict cleanup for folder name (URL-safe)
+    $new_safe_name = strtolower(preg_replace('/[^A-Za-z0-9]/', ' ', $new_true_name));
+    $new_safe_name = str_replace(' ', '-', trim(preg_replace('/ +/', ' ', $new_safe_name)));
     $new_folder = $root_stories . $new_safe_name;
-    if (file_exists($old_folder) && !file_exists($new_folder)) {
-        rename($old_folder, $new_folder);
+
+    if (file_exists($old_folder)) {
+        // Update the title.txt with the cleaned True Name
+        file_put_contents($old_folder . '/title.txt', $new_true_name);
+
+        if (!file_exists($new_folder)) {
+            rename($old_folder, $new_folder);
+        }
     }
     header("Location: index.php?msg=renamed");
     exit;
@@ -49,11 +60,19 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empt
 
 // Handle Create
 if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name']) && !isset($_POST['action'])) {
-    $folder_name = strtolower(preg_replace('/[^A-Za-z0-9\-]/', '-', $_POST['story_name']));
+    $original_name = preg_replace('/[<>\"\'&]/', '', strip_tags($_POST['story_name']));
+    $folder_name = strtolower(preg_replace('/[^A-Za-z0-9]/', ' ', $original_name));
+    $folder_name = str_replace(' ', '-', trim(preg_replace('/ +/', ' ', $folder_name)));
     $target_dir = $root_stories . $folder_name;
+
     if (!file_exists($target_dir)) {
         mkdir($target_dir, 0777, true);
         mkdir($target_dir . '/uploads', 0777, true);
+
+        file_put_contents($target_dir . '/title.txt', $original_name);
+
+        file_put_contents($target_dir . '/date.txt', date("F j, Y"));
+
         $files_to_copy = ['index.php', 'admin.php', 'upload.php'];
         foreach ($files_to_copy as $file) {
             $src = 'template/' . $file;
@@ -72,7 +91,61 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
     <meta charset="UTF-8">
     <title>Story Factory</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%23222%22 stroke=%22%23ffaa00%22 stroke-width=%228%22/><text y=%2260%22 font-size=%2250%22 font-weight=%22bold%22 fill=%22%23ffaa00%22 font-family=%22Arial%22 x=%2210%22>S</text><text y=%2285%22 font-size=%2250%22 font-weight=%22bold%22 fill=%22white%22 font-family=%22Arial%22 x=%2245%22>F</text></svg>">
     <style>
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 45px;
+            height: 45px;
+            background: #222;
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
+        }
+
+        .brand-icon::before {
+            content: 'S';
+            color: #ffaa00;
+            font-weight: 900;
+            font-size: 24px;
+            position: absolute;
+            left: 8px;
+            top: 2px;
+        }
+
+        .brand-icon::after {
+            content: 'F';
+            color: #fff;
+            font-weight: 900;
+            font-size: 24px;
+            position: absolute;
+            right: 8px;
+            bottom: 2px;
+        }
+
+        .brand-text {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #eee;
+        }
+
+        .brand-text span {
+            color: #ffaa00;
+            font-weight: 900;
+        }
+
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #111;
@@ -204,22 +277,64 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
             text-align: center;
             font-size: 14px;
         }
+
+        .story-date {
+            display: block;
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        .story-date::before {
+            content: '●';
+            color: #ffaa00;
+            margin-right: 5px;
+            font-size: 8px;
+        }
+
+        .card-preview-box {
+            width: 100%;
+            height: 160px;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom: 1px solid #333;
+        }
+
+        .card-preview-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .card-link:hover .card-preview-box img {
+            transform: scale(1.1);
+        }
+
+        .no-image-text {
+            font-size: 11px;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <div class="header-flex">
-            <h1 style="margin:0;">
-                <a href="<?php echo dirname($_SERVER['PHP_SELF']); ?>/" style="text-decoration:none; color:inherit;">
-                    Story Factory
-                </a>
-            </h1>
-
+            <a href="<?php echo dirname($_SERVER['PHP_SELF']); ?>/" class="logo-container">
+                <div class="brand-icon"></div>
+                <div class="brand-text">Story<span>Factory</span></div>
+            </a>
             <?php if ($isAdmin): ?>
-                <a href="hub.php?logout=1" style="color:#666; text-decoration:none; font-size:12px; border: 1px solid #333; padding: 5px 10px; border-radius: 4px;">
-                    Exit Admin Mode
-                </a>
+                <a href="hub.php?logout=1" style="color:#666; text-decoration:none; font-size:12px; border: 1px solid #333; padding: 5px 10px; border-radius: 4px;">Exit Admin Mode</a>
             <?php endif; ?>
         </div>
 
@@ -240,25 +355,45 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
             <?php
             if (!is_dir($root_stories)) mkdir($root_stories, 0777, true);
             $dirs = array_filter(glob($root_stories . '*'), 'is_dir');
+
             foreach ($dirs as $dir):
-                $name = basename($dir);
-                $display_name = ucwords(str_replace('-', ' ', $name));
+                $folder_name = basename($dir);
+                $title_file = $dir . '/title.txt';
+                $date_file = $dir . '/date.txt';
+
+                $display_name = file_exists($title_file) ? file_get_contents($title_file) : ucwords(str_replace('-', ' ', $folder_name));
+                $display_date = file_exists($date_file) ? file_get_contents($date_file) : date("F j, Y", filectime($dir));
+
+                $images = glob($dir . "/uploads/*.{jpg,jpeg,png,webp,gif}", GLOB_BRACE);
+                $thumbnail = !empty($images) ? $images[0] : null;
             ?>
                 <div class="story-card">
-                    <a href="<?php echo $dir; ?>/index.php" target="_blank" class="card-link">
-                        <span class="folder-icon">📁</span>
-                        <strong><?php echo $display_name; ?></strong>
+                    <a href="<?php echo $dir; ?>/index.php" target="_blank" class="card-link" style="padding:0;">
+                        <div class="card-preview-box">
+                            <?php if ($thumbnail): ?>
+                                <img src="<?php echo $thumbnail; ?>" alt="Preview">
+                            <?php else: ?>
+                                <div class="no-image-text">No Images Yet</div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div style="padding: 20px;">
+                            <strong><?php echo htmlspecialchars($display_name); ?></strong>
+                            <span class="story-date"><?php echo $display_date; ?></span>
+                        </div>
                     </a>
+
                     <?php if ($isAdmin): ?>
                         <div class="card-actions">
-                            <button class="action-btn" onclick="renameFolder('<?php echo $name; ?>')">Rename</button>
+                            <button class="action-btn" onclick="renameFolder('<?php echo $folder_name; ?>', '<?php echo addslashes($display_name); ?>')">Rename</button>
                             <a href="<?php echo $dir; ?>/admin.php" target="_blank" class="action-btn">Admin</a>
-                            <button class="action-btn btn-delete" onclick="deleteFolder('<?php echo $name; ?>')">Delete</button>
+                            <button class="action-btn btn-delete" onclick="deleteFolder('<?php echo $folder_name; ?>', '<?php echo addslashes($display_name); ?>')">Delete</button>
                         </div>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>
+
     </div>
 
     <?php if ($isAdmin): ?>
@@ -270,22 +405,20 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
         </form>
 
         <script>
-            function renameFolder(oldName) {
-                let readable = oldName.replace(/-/g, ' ');
-                let newName = prompt("Rename story '" + readable + "' to:", readable);
-                if (newName && newName.trim() !== "" && newName.trim().toLowerCase() !== readable.toLowerCase()) {
+            function renameFolder(folderName, trueName) {
+                let newName = prompt("Rename story '" + trueName + "' to:", trueName);
+                if (newName && newName.trim() !== "" && newName.trim() !== trueName) {
                     document.getElementById('formAction').value = 'rename';
-                    document.getElementById('oldNameInput').value = oldName;
+                    document.getElementById('oldNameInput').value = folderName;
                     document.getElementById('newNameInput').value = newName;
                     document.getElementById('masterForm').submit();
                 }
             }
 
-            function deleteFolder(name) {
-                let readable = name.replace(/-/g, ' ');
-                if (confirm("ARE YOU SURE?\n\nThis will permanently delete '" + readable + "' and all images. This cannot be undone.")) {
+            function deleteFolder(folderName, trueName) {
+                if (confirm("ARE YOU SURE?\n\nThis will permanently delete '" + trueName + "' and all contents. This cannot be undone.")) {
                     document.getElementById('formAction').value = 'delete';
-                    document.getElementById('folderNameInput').value = name;
+                    document.getElementById('folderNameInput').value = folderName;
                     document.getElementById('masterForm').submit();
                 }
             }
