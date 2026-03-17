@@ -36,6 +36,63 @@ if (isset($_GET['logout'])) {
     <title>Welcome to StoryHub</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        /* New S+F Factory Logo */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 45px;
+            height: 45px;
+            background: #222;
+            border: 2px solid #ffaa00;
+            /* Safety Orange/Yellow */
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
+        }
+
+        /* Creating the S and F overlap look */
+        .brand-icon::before {
+            content: 'S';
+            color: #ffaa00;
+            font-weight: 900;
+            font-size: 24px;
+            position: absolute;
+            left: 8px;
+            top: 2px;
+        }
+
+        .brand-icon::after {
+            content: 'F';
+            color: #fff;
+            font-weight: 900;
+            font-size: 24px;
+            position: absolute;
+            right: 8px;
+            bottom: 2px;
+        }
+
+        .brand-text {
+            font-family: 'Orbitron', 'Segoe UI', sans-serif;
+            /* A techy font if available */
+            font-size: 22px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #eee;
+        }
+
+        .brand-text span {
+            color: #ffaa00;
+            font-weight: 900;
+        }
+
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #000;
