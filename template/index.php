@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Europe/Sofia');
 session_start();
 
 $folder_name = basename(getcwd());
@@ -196,6 +197,9 @@ if (file_exists('title.txt')) {
             lightbox.style.display = "none";
         }
     </script>
+
+    <?php include '../../footer.php'; ?>
+
 </body>
 
 </html>
