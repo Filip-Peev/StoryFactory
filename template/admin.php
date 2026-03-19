@@ -18,7 +18,6 @@ $json_file = "data.json";
 $file_exists = file_exists($json_file);
 $data = $file_exists ? (json_decode(file_get_contents($json_file), true) ?? []) : [];
 
-// --- NEW: HANDLE AJAX TEXT UPDATE ---
 if (isset($_POST['action']) && $_POST['action'] == 'update_text') {
     $index = $_POST['index'];
     if (isset($data[$index])) {
@@ -32,7 +31,6 @@ if (isset($_POST['action']) && $_POST['action'] == 'update_text') {
     }
 }
 
-// HANDLE THUMBNAIL SET
 if (isset($_GET['set_thumb']) && $file_exists) {
     $index = $_GET['set_thumb'];
     if (isset($data[$index])) {
@@ -47,7 +45,6 @@ if (isset($_GET['set_thumb']) && $file_exists) {
     }
 }
 
-// HANDLE DELETION
 if (isset($_GET['delete']) && $file_exists) {
     $index = $_GET['delete'];
     if (isset($data[$index])) {

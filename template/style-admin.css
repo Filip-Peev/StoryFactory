@@ -87,7 +87,7 @@ th {
 }
 
 .col-img {
-  width: 120px; /* Increased to fit 80px image + 30px padding */
+  width: 120px;
 }
 
 .col-file {
@@ -96,9 +96,9 @@ th {
 
 .action-flex {
   display: flex;
-  flex-direction: column; /* This stacks them vertically */
-  gap: 8px; /* Keeps consistent spacing between them */
-  align-items: flex-end; /* Aligns them to the right side of the cell */
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
   justify-content: center;
 }
 
@@ -106,11 +106,11 @@ th {
   display: flex;
   gap: 8px;
   margin-top: 8px;
-  flex-wrap: wrap; /* Allows stacking if no room side-by-side */
+  flex-wrap: wrap;
 }
 
 .col-action {
-  width: 150px; /* Reduced from 320px since they are stacked */
+  width: 150px;
   text-align: right;
   vertical-align: middle;
 }
@@ -145,7 +145,6 @@ img.thumb {
   font-size: 13px;
 }
 
-/* --- UPDATED BUTTON CORE --- */
 .btn-action,
 .btn-edit,
 .btn-save,
@@ -157,22 +156,19 @@ img.thumb {
   padding: 6px 12px;
   border-radius: 4px;
   transition: 0.2s;
-  display: inline-flex; /* Changed to inline-flex for better alignment */
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
   cursor: pointer;
   font-family: inherit;
   text-align: center;
-
-  width: 100%; /* Buttons will fill the 150px width */
   min-width: 110px;
-
   background: transparent;
   line-height: 1.2;
-  margin-bottom: 0; /* Reset margins to let 'gap' handle spacing */
+  margin-bottom: 0;
 }
-/* Orange Theme: Edit, Save, Thumb */
+
 .btn-edit,
 .btn-save,
 .btn-thumb {
@@ -187,7 +183,6 @@ img.thumb {
   color: #000;
 }
 
-/* Red Theme: Delete */
 .btn-delete {
   color: #ff4444;
   border: 1px solid #ff4444;
@@ -198,7 +193,6 @@ img.thumb {
   color: #000;
 }
 
-/* Grey Theme: Cancel */
 .btn-cancel {
   color: #888;
   border: 1px solid #444;
@@ -210,7 +204,6 @@ img.thumb {
   background: #333;
 }
 
-/* New Background for Editable Text Fields */
 .edit-input {
   width: 100%;
   background: #0a0a0a !important;
@@ -228,7 +221,6 @@ img.thumb {
   outline: none;
 }
 
-/* Factory Logo Styles */
 .logo-container {
   display: flex;
   align-items: center;
@@ -343,7 +335,7 @@ img.thumb {
 
   .edit-actions .btn-save,
   .edit-actions .btn-cancel {
-    width: 95px; /* Matches your min-width from the other buttons */
-    margin-left: 0 !important; /* Removes that 5px margin-left on Cancel */
+    width: 95px;
+    margin-left: 0 !important;
   }
 }
