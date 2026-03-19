@@ -35,7 +35,7 @@ h1 {
 .view-story {
   width: 100%;
   padding: 8px 16px;
-  color: #ffaa00;
+  color: grey;
   border: 1px solid #ffaa00 !important;
   background: none;
   border-radius: 6px;
@@ -44,8 +44,7 @@ h1 {
 }
 
 .view-story:hover {
-  background: #ffaa00;
-  color: #fff;
+  color: #ffaa00;
 }
 
 .admin-logout {
@@ -88,17 +87,32 @@ th {
 }
 
 .col-img {
-  width: 90px;
+  width: 120px;
 }
 
 .col-file {
   width: 180px;
 }
 
+.action-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
 .col-action {
-  width: 180px;
+  width: 150px;
   text-align: right;
-  padding-right: 20px;
+  vertical-align: middle;
 }
 
 img.thumb {
@@ -131,22 +145,39 @@ img.thumb {
   font-size: 13px;
 }
 
-.btn-action {
+.btn-action,
+.btn-edit,
+.btn-save,
+.btn-cancel,
+.btn-thumb,
+.btn-delete {
   text-decoration: none;
   font-size: 12px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 4px;
   transition: 0.2s;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  min-width: 110px;
+  background: transparent;
+  line-height: 1.2;
+  margin-bottom: 0;
 }
 
+.btn-edit,
+.btn-save,
 .btn-thumb {
   color: #ffaa00;
   border: 1px solid #ffaa00;
-  margin-right: 5px;
 }
 
+.btn-edit:hover,
+.btn-save:hover,
 .btn-thumb:hover {
   background: #ffaa00;
   color: #000;
@@ -159,10 +190,37 @@ img.thumb {
 
 .btn-delete:hover {
   background: #ff4444;
-  color: #fff;
+  color: #000;
 }
 
-/* Factory Logo Styles */
+.btn-cancel {
+  color: #888;
+  border: 1px solid #444;
+}
+
+.btn-cancel:hover {
+  color: #fff;
+  border-color: #666;
+  background: #333;
+}
+
+.edit-input {
+  width: 100%;
+  background: #0a0a0a !important;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 8px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.edit-input:focus {
+  border-color: #ffaa00;
+  outline: none;
+}
+
 .logo-container {
   display: flex;
   align-items: center;
@@ -255,6 +313,7 @@ img.thumb {
 
   .col-action {
     text-align: center;
+    width: 100% !important;
   }
 
   img.thumb {
@@ -267,5 +326,16 @@ img.thumb {
   .btn-action {
     width: 100%;
     margin-bottom: 10px;
+  }
+
+  .edit-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .edit-actions .btn-save,
+  .edit-actions .btn-cancel {
+    width: 95px;
+    margin-left: 0 !important;
   }
 }
