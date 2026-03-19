@@ -1,0 +1,319 @@
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #111;
+  color: white;
+}
+
+.uploadbox {
+  padding: 40px 20px;
+  background: #000;
+  text-align: center;
+  border-bottom: 1px solid #222;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 400px;
+}
+
+input[type="text"] {
+  width: 40%;
+  max-width: 400px;
+  padding: 10px;
+  margin: 5px 0;
+  background: #222;
+  border: 1px solid #444;
+  color: white;
+  border-radius: 5px;
+}
+
+.char-count {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+#preview-container {
+  margin-bottom: 15px;
+  display: none;
+}
+
+#preview-img {
+  max-width: 150px;
+  max-height: 150px;
+  border-radius: 8px;
+  border: 2px solid #444;
+}
+
+.error-msg {
+  background: #ff4444;
+  color: white;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.story {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.story img {
+  max-width: 90%;
+  max-height: 70%;
+  border-radius: 12px;
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease;
+  cursor: pointer;
+  background: #222;
+}
+
+.story img:hover {
+  transform: scale(1.03);
+}
+
+.text {
+  margin-top: 25px;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.text p {
+  margin: 8px 0;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1.4;
+  max-width: 600px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.navbuttons {
+  position: fixed;
+  right: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+}
+
+.navbuttons button,
+.navbuttons a {
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  background: rgba(45, 45, 45, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.navbuttons button svg,
+.navbuttons a svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.navbuttons button:active,
+.navbuttons a:active {
+  transition: none;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.navbuttons a.nav-gallery-btn {
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.navbuttons button:hover,
+.navbuttons a:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #ffaa00;
+}
+
+.navbuttons button:hover svg {
+  stroke: #fff;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  text-decoration: none;
+}
+
+.brand-icon {
+  width: 45px;
+  height: 45px;
+  background: #222;
+  border: 2px solid #ffaa00;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
+}
+
+.brand-icon::before {
+  content: "S";
+  color: #ffaa00;
+  font-weight: 900;
+  font-size: 24px;
+  position: absolute;
+  left: 8px;
+  top: 2px;
+}
+
+.brand-icon::after {
+  content: "F";
+  color: #fff;
+  font-weight: 900;
+  font-size: 24px;
+  position: absolute;
+  right: 8px;
+  bottom: 2px;
+}
+
+.brand-text {
+  font-family: "Segoe UI", sans-serif;
+  font-size: 22px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #eee;
+}
+
+.brand-text span {
+  color: #ffaa00;
+  font-weight: 900;
+}
+
+@media (max-width: 768px) {
+  html {
+    scroll-snap-type: y mandatory;
+  }
+
+  .story {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .navbuttons {
+    right: 10px;
+  }
+
+  .navbuttons button,
+  .navbuttons a {
+    width: 45px;
+    height: 45px;
+  }
+
+  .story img:hover {
+    transform: none;
+  }
+}
+
+#lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+#lightbox img {
+  max-width: 95%;
+  max-height: 95%;
+  border-radius: 10px;
+}
+
+#close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 40px;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  user-select: none;
+}
+
+.btn-upload {
+  background: #ffaa00;
+  color: #000;
+  border: none;
+  padding: 12px 30px;
+  font-weight: bold;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-upload:hover {
+  background: #ffcc66;
+  box-shadow: 0 5px 15px rgba(255, 170, 0, 0.3);
+}
+
+.custom-file-upload {
+  display: inline-block;
+  padding: 8px 20px;
+  cursor: pointer;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 5px;
+  font-size: 14px;
+  color: #aaa;
+  transition: 0.3s;
+  margin-bottom: 10px;
+}
+
+.custom-file-upload:hover {
+  background: #333;
+  border-color: #ffaa00;
+  color: #fff;
+}
+
+#imageInput {
+  display: none;
+}
+
+.uploadbox h2 {
+  font-weight: 300;
+  letter-spacing: 1px;
+  margin-bottom: 30px;
+  color: #fff;
+}
