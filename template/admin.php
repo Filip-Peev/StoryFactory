@@ -21,9 +21,9 @@ $data = $file_exists ? (json_decode(file_get_contents($json_file), true) ?? []) 
 if (isset($_POST['action']) && $_POST['action'] == 'update_text') {
     $index = $_POST['index'];
     if (isset($data[$index])) {
-        $data[$index]['line1'] = $_POST['line1'];
-        $data[$index]['line2'] = $_POST['line2'];
-        $data[$index]['line3'] = $_POST['line3'];
+        $data[$index]['line1'] = strip_tags($_POST['line1']);
+        $data[$index]['line2'] = strip_tags($_POST['line2']);
+        $data[$index]['line3'] = strip_tags($_POST['line3']);
 
         file_put_contents($json_file, json_encode($data, JSON_PRETTY_PRINT));
         echo "success";
