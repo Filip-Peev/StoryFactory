@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Europe/Sofia');
 ob_start();
 session_start();
 
@@ -199,6 +200,9 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
             }
         </script>
     <?php endif; ?>
+
+    <?php include './footer.php'; ?>
+
 </body>
 
 </html>

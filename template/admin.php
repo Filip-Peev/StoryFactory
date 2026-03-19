@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Europe/Sofia');
 ob_start();
 session_start();
 
@@ -178,6 +179,9 @@ if (isset($_GET['delete']) && $file_exists) {
                 .catch(err => alert("Connection error."));
         }
     </script>
+
+    <?php include '../../footer.php'; ?>
+
 </body>
 
 </html>
