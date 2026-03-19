@@ -52,6 +52,12 @@ if ($isAdmin && isset($_POST['action']) && $_POST['action'] == 'rename' && !empt
 
 if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name']) && !isset($_POST['action'])) {
     $original_name = preg_replace('/[<>\"\'&]/', '', strip_tags($_POST['story_name']));
+
+    if (mb_strlen($original_name) > 24 || empty(trim($original_name))) {
+        header("Location: index.php?msg=invalid_name");
+        exit;
+    }
+
     $folder_name = strtolower(preg_replace('/[^A-Za-z0-9]/', ' ', $original_name));
     $folder_name = str_replace(' ', '-', trim(preg_replace('/ +/', ' ', $folder_name)));
     $target_dir = $root_stories . $folder_name;
@@ -61,18 +67,18 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
         mkdir($target_dir . '/uploads', 0777, true);
 
         file_put_contents($target_dir . '/title.txt', $original_name);
-
         file_put_contents($target_dir . '/date.txt', date("F j, Y"));
 
-        $files_to_copy = ['index.php', 'admin.php', 'upload.php'];
+        $files_to_copy = ['index.php', 'admin.php', 'style.css', 'upload.php', 'style-admin.css'];
         foreach ($files_to_copy as $file) {
             $src = 'template/' . $file;
             $dest = $target_dir . '/' . $file;
             if (file_exists($src)) copy($src, $dest);
         }
+
+        header("Location: index.php?msg=created");
+        exit;
     }
-    header("Location: index.php?msg=created");
-    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -83,238 +89,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
     <title>Story Factory</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2215%22 fill=%22%23222%22 stroke=%22%23ffaa00%22 stroke-width=%228%22/><text y=%2260%22 font-size=%2250%22 font-weight=%22bold%22 fill=%22%23ffaa00%22 font-family=%22Arial%22 x=%2210%22>S</text><text y=%2285%22 font-size=%2250%22 font-weight=%22bold%22 fill=%22white%22 font-family=%22Arial%22 x=%2245%22>F</text></svg>">
-    <style>
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            text-decoration: none;
-        }
-
-        .brand-icon {
-            width: 45px;
-            height: 45px;
-            background: #222;
-            border: 2px solid #ffaa00;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
-        }
-
-        .brand-icon::before {
-            content: 'S';
-            color: #ffaa00;
-            font-weight: 900;
-            font-size: 24px;
-            position: absolute;
-            left: 8px;
-            top: 2px;
-        }
-
-        .brand-icon::after {
-            content: 'F';
-            color: #fff;
-            font-weight: 900;
-            font-size: 24px;
-            position: absolute;
-            right: 8px;
-            bottom: 2px;
-        }
-
-        .brand-text {
-            font-family: 'Segoe UI', sans-serif;
-            font-size: 22px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #eee;
-        }
-
-        .brand-text span {
-            color: #ffaa00;
-            font-weight: 900;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #111;
-            color: white;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: auto;
-        }
-
-        .header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-        }
-
-        .create-box {
-            background: #1a1a1a;
-            padding: 25px;
-            border-radius: 12px;
-            border: 1px solid #333;
-            margin-bottom: 30px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            background: #222;
-            border: 1px solid #444;
-            color: white;
-            border-radius: 6px;
-            margin: 10px 0;
-            box-sizing: border-box;
-        }
-
-        .primary-btn {
-            width: 100%;
-            padding: 12px;
-            background: #00aaff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .story-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 20px;
-        }
-
-        .story-card {
-            background: #1a1a1a;
-            border-radius: 10px;
-            border: 1px solid #333;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-link {
-            display: block;
-            padding: 30px 20px;
-            text-align: center;
-            text-decoration: none;
-            color: white;
-            flex-grow: 1;
-            transition: 0.2s;
-        }
-
-        .card-link:hover {
-            background: #222;
-        }
-
-        .folder-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .card-actions {
-            display: flex;
-            border-top: 1px solid #333;
-            background: #151515;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 12px 5px;
-            background: none;
-            border: none;
-            color: #777;
-            cursor: pointer;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: 0.2s;
-            text-decoration: none;
-            text-align: center;
-            border-right: 1px solid #333;
-        }
-
-        .action-btn:last-child {
-            border-right: none;
-        }
-
-        .action-btn:hover {
-            background: #222;
-            color: #fff;
-        }
-
-        .btn-delete:hover {
-            color: #ff4444;
-        }
-
-        .status-msg {
-            background: #28a745;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        .story-date {
-            display: block;
-            font-size: 10px;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 8px;
-            font-weight: bold;
-        }
-
-        .story-date::before {
-            content: '●';
-            color: #ffaa00;
-            margin-right: 5px;
-            font-size: 8px;
-        }
-
-        .card-preview-box {
-            width: 100%;
-            height: 160px;
-            background: #111;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border-bottom: 1px solid #333;
-        }
-
-        .card-preview-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-
-        .card-link:hover .card-preview-box img {
-            transform: scale(1.1);
-        }
-
-        .no-image-text {
-            font-size: 11px;
-            color: #444;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -325,7 +100,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                 <div class="brand-text">Story<span>Factory</span></div>
             </a>
             <?php if ($isAdmin): ?>
-                <a href="hub.php?logout=1" style="color:#666; text-decoration:none; font-size:12px; border: 1px solid #333; padding: 5px 10px; border-radius: 4px;">Exit Admin Mode</a>
+                <a href="hub.php?logout=1" class="admin-logout">Logout</a>
             <?php endif; ?>
         </div>
 
@@ -336,7 +111,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
         <?php if ($isAdmin): ?>
             <div class="create-box">
                 <form method="post">
-                    <input type="text" name="story_name" placeholder="Enter New Story Title..." required>
+                    <input type="text" name="story_name" placeholder="Enter New Story Title..." maxlength="24" minlength="2" required>
                     <button type="submit" class="primary-btn">Create a Story</button>
                 </form>
             </div>
@@ -366,7 +141,7 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
                 }
             ?>
                 <div class="story-card">
-                    <a href="<?php echo $dir; ?>/" target="_blank" class="card-link" style="padding:0;">
+                    <a href="<?php echo $dir; ?>/" class="card-link" style="padding:0;">
                         <div class="card-preview-box">
                             <?php if ($thumbnail): ?>
                                 <img src="<?php echo $thumbnail; ?>" alt="Story Preview">
