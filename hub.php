@@ -25,71 +25,21 @@ if (isset($_GET['logout'])) {
 <html>
 
 <head>
-    <title>Admin Login - StoryHub</title>
+    <title>Admin Login - Story Factory</title>
+    <link rel="stylesheet" href="./style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            text-decoration: none;
-        }
-
-        .brand-icon {
-            width: 45px;
-            height: 45px;
-            background: #222;
-            border: 2px solid #ffaa00;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 0 0 20px rgba(255, 170, 0, 0.2);
-        }
-
-        .brand-icon::before {
-            content: 'S';
-            color: #ffaa00;
-            font-weight: 900;
-            font-size: 24px;
-            position: absolute;
-            left: 8px;
-            top: 2px;
-        }
-
-        .brand-icon::after {
-            content: 'F';
-            color: #fff;
-            font-weight: 900;
-            font-size: 24px;
-            position: absolute;
-            right: 8px;
-            bottom: 2px;
-        }
-
-        .brand-text {
-            font-family: 'Orbitron', 'Segoe UI', sans-serif;
-            font-size: 22px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #eee;
-        }
-
-        .brand-text span {
-            color: #ffaa00;
-            font-weight: 900;
-        }
-
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #000;
             color: white;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 80vh;
             margin: 0;
+            overflow-x: hidden;
         }
 
         .gate-card {
@@ -99,11 +49,6 @@ if (isset($_GET['logout'])) {
             border: 1px solid #333;
             text-align: center;
             width: 320px;
-        }
-
-        h1 {
-            margin-bottom: 30px;
-            font-weight: 300;
         }
 
         .btn-admin {
@@ -118,17 +63,6 @@ if (isset($_GET['logout'])) {
             background: #00aaff;
             color: white;
             font-size: 16px;
-        }
-
-        input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            background: #222;
-            border: 1px solid #444;
-            color: white;
-            border-radius: 6px;
-            box-sizing: border-box;
         }
 
         .error {
