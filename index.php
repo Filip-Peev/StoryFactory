@@ -124,6 +124,19 @@ if ($isAdmin && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['story_name
 
             $dirs = array_filter(glob($root_stories . '*'), 'is_dir');
 
+            // Sort stories by the date stored in date.txt (newest first)
+            usort($dirs, function ($a, $b) {
+                $fileA = $a . '/date.txt';
+                $fileB = $b . '/date.txt';
+
+                // Get timestamps: try date.txt first, fallback to folder creation time
+                $timeA = file_exists($fileA) ? strtotime(file_get_contents($fileA)) : filectime($a);
+                $timeB = file_exists($fileB) ? strtotime(file_get_contents($fileB)) : filectime($b);
+
+                return $timeB <=> $timeA;
+            });
+
+
             foreach ($dirs as $dir):
                 $folder_name = basename($dir);
                 $title_file = $dir . '/title.txt';
