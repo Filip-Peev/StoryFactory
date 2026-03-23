@@ -25,11 +25,6 @@ if (file_exists('title.txt')) {
 
     <div class="navbuttons">
 
-        <a href="../../" title="Gallery" class="nav-gallery-btn">
-            <svg viewBox="0 0 24 24">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-        </a>
         <button onclick="goTop()" title="First Story">
             <svg viewBox="0 0 24 24">
                 <path d="M12 19V5M5 12l7-7 7 7" />
@@ -40,6 +35,11 @@ if (file_exists('title.txt')) {
                 <path d="M18 15l-6-6-6 6" />
             </svg>
         </button>
+        <a href="../../" title="Gallery" class="nav-gallery-btn">
+            <svg viewBox="0 0 24 24">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+        </a>
         <button onclick="nextStory()" title="Next">
             <svg viewBox="0 0 24 24">
                 <path d="M6 9l6 6 6-6" />
